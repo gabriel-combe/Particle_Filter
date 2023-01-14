@@ -1,5 +1,4 @@
-import numpy as np
-from typing import NamedTuple, Optional
+from typing import Optional
 
 class State(object):
     """Represents the state vector"""

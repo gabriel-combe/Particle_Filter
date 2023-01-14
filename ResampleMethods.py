@@ -1,6 +1,6 @@
 import numpy as np
 
-def systematic(weights :np.ndarray) -> np.ndarray:
+def systematic_resample(weights :np.ndarray) -> np.ndarray:
     N = len(weights)
 
     offsets = (np.arange(N) + np.random.random()) / N

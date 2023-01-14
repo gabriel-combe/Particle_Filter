@@ -1,7 +1,7 @@
 import scipy.stats
 import numpy as np
 from utils import *
-from resampling import *
+from ResampleMethods import *
 import matplotlib.pyplot as plt
 
 def predict(particles :np.ndarray, u :tuple[float, float], Q :tuple[float, float], dt :float =1.) -> np.ndarray:
@@ -19,7 +19,7 @@ def predict(particles :np.ndarray, u :tuple[float, float], Q :tuple[float, float
 
     return particles
 
-def update(particles :np.ndarray, weights :np.ndarray, z :np.ndarray, R :float, landmarks :np.ndarray) -> np.ndarray:
+def update_with_landmarks(particles :np.ndarray, weights :np.ndarray, z :np.ndarray, R :float, landmarks :np.ndarray) -> np.ndarray:
     for i, landmark in enumerate(landmarks):
         distance = np.linalg.norm(particles[:, :2] - landmark, axis=1)
         weights *= scipy.stats.norm(distance, R).pdf(z[i])
@@ -28,7 +28,7 @@ def update(particles :np.ndarray, weights :np.ndarray, z :np.ndarray, R :float, 
     weights /= sum(weights)
     return weights
 
-def estimate(particles :np.ndarray, weights :np.ndarray) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
+def estimate(particles :np.ndarray, weights :np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     position = particles[:]
     mean = np.average(position, weights=weights, axis=0)
     var = np.average((position - mean)**2, weights=weights, axis=0)
@@ -51,11 +51,11 @@ def particle_filter(N :int, controls :np.ndarray, measurements :np.ndarray, land
         particles = predict(particles, u, Q=model_std_err)
 
         # Update the weigths of the particle according to the measurements
-        weights = update(particles, weights, z, R=sensor_std_err, landmarks=landmarks)
+        weights = update_with_landmarks(particles, weights, z, R=sensor_std_err, landmarks=landmarks)
 
         # If too few effective particles, resample
         if neff(weights) < N/4:
-            indexes = systematic(weights)
+            indexes = systematic_resample(weights)
             particles, weights = resampling_from_index(particles, weights, indexes)
         
         # Estimate the mean and variance of the particles according to their weights
