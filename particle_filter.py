@@ -54,7 +54,7 @@ def particle_filter(N :int, controls :np.ndarray, measurements :np.ndarray, land
         weights = update(particles, weights, z, R=sensor_std_err, landmarks=landmarks)
 
         # If too few effective particles, resample
-        if neff(weights) < N/2:
+        if neff(weights) < N/4:
             indexes = systematic(weights)
             particles, weights = resampling_from_index(particles, weights, indexes)
         
@@ -75,19 +75,21 @@ if __name__=="__main__":
     u = np.tile([0, np.sqrt(2)], (ITER, 1))
 
     landmarks = np.array([
-        [-1, 2],
+        [4, 1.5],
         [5, 10],
         [12, 14],
-        [18, 21]
+        [18, 16]
     ])
 
     z = [(np.linalg.norm(landmarks - x_pos, axis=1) + (np.random.randn(len(landmarks)) * sensor_std_err)) for x_pos in x_groundtruth[1:]]
 
-    np.random.seed(19)
+    #np.random.seed(19)
     # history = particle_filter(N=N, controls=u, measurements=z, landmarks=landmarks, init_pos=((1,1, np.pi/4), (5, 5, np.pi/4)))
     history = particle_filter(N=N, controls=u, measurements=z, landmarks=landmarks)
-    
+
     plt.figure()
+
+    l = plt.scatter(landmarks[:, 0], landmarks[:, 1], color='b', marker='^', s=180)
 
     plt.scatter(history[0][0][:, 0], history[0][0][:, 1], alpha=.20*np.sqrt(5000)/np.sqrt(N), color='g')
 
@@ -96,7 +98,7 @@ if __name__=="__main__":
         p1 = plt.scatter(x_groundtruth[i+1][0], x_groundtruth[i+1][1], marker='+', color='k', s=180, lw=3)
         p2 = plt.scatter(state[2][0], state[2][1], marker='s', color='r')
     
-    plt.legend([p0, p1, p2], ['Particles', 'Actual', 'PF'], loc=4, numpoints=1)
+    plt.legend([l, p0, p1, p2], ['Landmarks', 'Particles', 'Actual', 'PF'], loc=4, numpoints=1)
     plt.xlim((0, 20))
     plt.ylim((0, 20))
     print('final position error, variance:\n\t', state[2][:2] - x_groundtruth[-1], state[3][:2])
