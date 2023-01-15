@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Optional
+from copy import deepcopy
 from ResampleMethods import systematic_resample
 from Particle import Particle, ConstAccelParticle2D, SimplePosHeadingParticle2D
 from Models import default_motion_model, default_measurement_model

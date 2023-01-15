@@ -12,7 +12,7 @@ def test():
     x_groundtruth = [[i, i] for i in range(ITER+1)]
 
     R = np.array([.1], dtype=float)
-    Q_control = np.array([.2, .05], dtype=float)
+    Q_control = np.array([.2, .05], dtype=float)[np.newaxis, :]
 
     controls = np.tile([0, np.sqrt(2)], (ITER, 1))[:, np.newaxis, :]
 
@@ -36,7 +36,6 @@ def test():
     
     plt.figure()
 
-    l = plt.scatter(landmarks[:, 0], landmarks[:, 1], color='b', marker='^', s=180)
     plt.scatter(pf.particles[:, 0, 0], pf.particles[:, 0, 1], alpha=.20*np.sqrt(5000)/np.sqrt(N), color='g')
 
     for i, (u, z) in enumerate(zip(controls, measurements)):
@@ -48,6 +47,8 @@ def test():
         particles = plt.scatter(pf.particles[:, 0, 0], pf.particles[:, 0, 1], color='k', marker=',', s=1)
         x_true = plt.scatter(x_groundtruth[i+1][0], x_groundtruth[i+1][1], marker='+', color='k', s=180, lw=3)
         mean = plt.scatter(pf.mu[0, 0], pf.mu[0, 1], marker='s', color='r')
+
+    l = plt.scatter(landmarks[:, 0], landmarks[:, 1], color='b', marker='^', s=180)
 
     plt.legend([l, particles, x_true, mean], ['Landmarks', 'Particles', 'Actual', 'PF'], loc=4, numpoints=1)
     plt.xlim((0, 20))

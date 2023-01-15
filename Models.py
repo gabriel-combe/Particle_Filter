@@ -31,9 +31,9 @@ def SimplePosHeadingParticle2D_motion_model(particles: np.ndarray, Q_model: np.n
     N = particles.shape[0]
     track_dim = particles.shape[1]
 
-    particles[:, :, 2] += (u[:, 0] + (np.random.randn(N, track_dim) * Q_control[0])) % 2*np.pi
+    particles[:, :, 2] += (u[:, 0] + (np.random.randn(N, track_dim) * Q_control[:, 0])) % 2*np.pi
 
-    distance = (u[:, 1] * dt) + (np.random.randn(N, track_dim) * Q_control[1])
+    distance = (u[:, 1] * dt) + (np.random.randn(N, track_dim) * Q_control[:, 1])
 
     particles[:, :, 0] += np.cos(particles[:, :, 2]) * distance
     particles[:, :, 1] += np.sin(particles[:, :, 2]) * distance
@@ -42,10 +42,10 @@ def SimplePosHeadingParticle2D_motion_model(particles: np.ndarray, Q_model: np.n
 
 def SimplePosHeadingParticle2D_measurement_model(particles: np.ndarray, weights: np.ndarray, z: np.ndarray, R: np.ndarray, landmarks: np.ndarray) -> np.ndarray:
     for i in range(particles.shape[1]):
-        proba = 0
+        proba = 1.
         for k, landmark in enumerate(landmarks):
             distance = np.linalg.norm(particles[:, i, :2] - landmark, axis=1)
             proba *= ss.norm(distance, R[i]).pdf(z[i, k])
-        weights += proba
+        weights *= proba
 
     return weights
