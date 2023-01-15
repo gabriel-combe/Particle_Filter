@@ -22,6 +22,8 @@ def predict(particles :np.ndarray, u :tuple[float, float], Q :tuple[float, float
 def update_with_landmarks(particles :np.ndarray, weights :np.ndarray, z :np.ndarray, R :float, landmarks :np.ndarray) -> np.ndarray:
     for i, landmark in enumerate(landmarks):
         distance = np.linalg.norm(particles[:, :2] - landmark, axis=1)
+        print(distance)
+        exit()
         weights *= scipy.stats.norm(distance, R).pdf(z[i])
     
     weights += 1.e-12
@@ -39,7 +41,7 @@ def particle_filter(N :int, controls :np.ndarray, measurements :np.ndarray, land
     if init_pos is not None:
         particles = create_gaussian_particles(mean=init_pos[0], std=init_pos[1], N=N)
     else:
-        particles = create_uniform_particles(x_range=(0, 20), y_range=(0, 20), hd_range=(0, 2*np.pi), N=N)
+        particles = create_uniform_particles(x_range=(0, 20), y_range=(0, 20), hdg_range=(0, 2*np.pi), N=N)
 
     weights = np.ones(N) / N
     
@@ -64,7 +66,7 @@ def particle_filter(N :int, controls :np.ndarray, measurements :np.ndarray, land
     return history
 
 ITER = 18
-N = 5000
+N = 4
 
 if __name__=="__main__":
     x_groundtruth = [[i, i] for i in range(ITER+1)]

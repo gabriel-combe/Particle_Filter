@@ -1,8 +1,6 @@
-from typing import Optional
-
 class State(object):
     """Represents the state vector"""
-    def __init__(self, x: Optional[float] =0, y: Optional[float] =0, vel: Optional[float] =0, hdg: Optional[float] =0) -> None:
+    def __init__(self, x: float =0, y: float =0, vel: float =0, hdg: float =0) -> None:
         self.x = x
         self.y = y
         self.vel = vel
