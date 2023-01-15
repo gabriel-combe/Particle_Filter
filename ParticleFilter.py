@@ -2,47 +2,45 @@ import numpy as np
 from typing import Optional
 from ResampleMethods import systematic_resample
 from Particle import Particle, ConstAccelParticle2D, SimplePosHeadingParticle2D
-from Models import default_motion_model, default_control_model, default_measurement_model
+from Models import default_motion_model, default_measurement_model
 
 # Class for the particle filter object
 class ParticleFilter(object):
     def __init__(self, 
                 N: int, 
-                particle_struct: Particle =SimplePosHeadingParticle2D, 
+                particle_struct=SimplePosHeadingParticle2D, 
                 track_dim: int =1,
                 control_dim: int =0,
                 init_pos: np.ndarray =None,
                 ranges: tuple =None,
-                motion_model: function =default_motion_model,
-                control_model: function =default_control_model,
-                measurement_model: function =default_measurement_model,
+                motion_model_fn=default_motion_model,
+                measurement_model_fn=default_measurement_model,
                 Q_motion: Optional[np.ndarray] =None,
                 Q_control: Optional[np.ndarray] =None,
                 R: Optional[np.ndarray] =None,
-                resample_method: Optional[function] =systematic_resample):
+                resample_method_fn=systematic_resample):
 
         self.N = N
         self.track_dim = track_dim
         self.control_dim = control_dim
         self.particle_struct = particle_struct
-        self.state_dim = self.particle_struct.state_dim
+        self.state_dim = self.particle_struct().particle_dim
 
-        self.motion_model = motion_model  
-        self.control_model = control_model
-        self.measurement_model = measurement_model
+        self.motion_model = motion_model_fn
+        self.measurement_model = measurement_model_fn
 
         self.Q_motion = Q_motion
         if self.Q_motion is None:
-            self.Q_motion = np.ones(self.track_dim, self.state_dim)
+            self.Q_motion = np.ones((self.track_dim, self.state_dim))
         elif np.isscalar(self.Q_motion):
-            self.Q_motion = np.ones(self.track_dim, self.state_dim) * self.Q_motion
+            self.Q_motion = np.ones((self.track_dim, self.state_dim)) * self.Q_motion
         
         self.Q_control = Q_control
         if self.control_dim != 0:
             if self.Q_control is None:
-                self.Q_control = np.ones(self.track_dim, control_dim)
+                self.Q_control = np.ones((self.track_dim, control_dim))
             elif np.isscalar(self.Q_control):
-                self.Q_control = np.ones(self.track_dim, control_dim) * self.Q_control
+                self.Q_control = np.ones((self.track_dim, control_dim)) * self.Q_control
         
         self.R = R
         if self.R is None:
@@ -50,16 +48,16 @@ class ParticleFilter(object):
         elif np.isscalar(self.R):
             self.R = np.eye(self.track_dim) * self.R
         
-        self.resample_method = resample_method
+        self.resample_method = resample_method_fn
 
         self.particles: np.ndarray = None
 
         if init_pos is not None:
-            self.particles = self.particle_struct.create_gaussian_particles(init_pos[0], init_pos[1], self.N, self.track_dim)
+            self.particles = self.particle_struct().create_gaussian_particles(init_pos[0], init_pos[1], self.N, self.track_dim)
         elif ranges is not None:
-            self.particles = self.particle_struct.create_uniform_particles(self.N, self.track_dim, ranges)
+            self.particles = self.particle_struct().create_uniform_particles(self.N, self.track_dim, ranges)
         else:
-            self.particles = self.particle_struct.create_uniform_particles(self.N, self.track_dim)
+            self.particles = self.particle_struct().create_uniform_particles(self.N, self.track_dim)
 
 
         self.weights: np.ndarray = np.ones(N) / N
@@ -77,7 +75,7 @@ class ParticleFilter(object):
 
     # Update the particles state by integrating new measurements
     def update(self, z: np.ndarray, args=()) -> None:
-
+        
         self.weights = self.measurement_model(self.particles, self.weights, z, self.R, *args)
 
         self.weights += 1.e-12
@@ -97,7 +95,7 @@ class ParticleFilter(object):
 
     # Perform resample 
     def resample(self, fraction: Optional[float] =1./4.) -> None:
-        if self.neff(self.weights) < self.N * fraction:
+        if self.neff() < self.N * fraction:
             indexes = self.resample_method(self.weights)
             self.particles[:] = self.particles[indexes]
             self.weights.resize(self.N)
