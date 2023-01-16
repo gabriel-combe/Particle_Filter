@@ -24,6 +24,7 @@ def default_measurement_model(particles: np.ndarray, weights: np.ndarray, z: np.
 
     return weights
 
+
 ##################################
 ### SimplePosHeadingParticle2D ###
 
@@ -49,3 +50,13 @@ def SimplePosHeadingParticle2D_measurement_model(particles: np.ndarray, weights:
         weights *= proba
 
     return weights
+
+
+##################################
+###### ConstAccelParticle2D ######
+
+def ConstAccelParticle2D_motion_model(particles: np.ndarray, Q_model: np.ndarray, dt: float, u: Optional[np.ndarray] =None, Q_control: Optional[np.ndarray] =None) -> np.ndarray:
+    pass
+
+def ConstAccelParticle2D_measurement_model(particles: np.ndarray, weights: np.ndarray, z: np.ndarray, R: np.ndarray, landmarks: np.ndarray) -> np.ndarray:
+    pass
