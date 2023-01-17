@@ -8,7 +8,7 @@ from Models import SimplePosHeadingParticle2D_motion_model, SimplePosHeadingPart
 
 N = 5000
 ITER = 50
-DT = .01
+DT = .05
 
 def SimplePosHeadingParticle2D_test():
     x_groundtruth = [[i*DT, i] for i in range(ITER+1)]
@@ -59,10 +59,10 @@ def SimplePosHeadingParticle2D_test():
     plt.show()
 
 def ConstAccelParticle2DVel_test():
-    x_groundtruth = np.array([[i*DT, (i*DT)**2, 1, ((i*DT)**2 - ((i-1)*DT)**2)/DT] for i in range(int((ITER)/DT)+1)])
+    # x_groundtruth = np.array([[i*DT, (i*DT)**2, 1, ((i*DT)**2 - ((i-1)*DT)**2)/DT] for i in range(int((ITER)/DT)+1)])
     # x_groundtruth = np.array([[i*DT, (i*DT)**3, 1, ((i*DT)**3 - ((i-1)*DT)**3)/DT] for i in range(int((ITER)/DT)+1)])
     # x_groundtruth = np.array([[i*DT, 10.*np.sin(i*DT), DT, DT*10.*np.cos(i*DT)] for i in range(int((ITER)/DT)+1)])
-    # x_groundtruth = np.array([[i*DT, 10.*np.sin(i*DT), 1, 10.*(np.sin(i*DT) - np.sin((i-1)*DT))/DT] for i in range(int((ITER)/DT)+1)])
+    x_groundtruth = np.array([[i*DT, 10.*np.sin(i*DT), 1, 10.*(np.sin(i*DT) - np.sin((i-1)*DT))/DT] for i in range(int((ITER)/DT)+1)])
 
     R = np.array([[.2, .2, .5, .5]], dtype=float)
     Q_motion = np.array([.3, .2, .7, .3, .2, .7], dtype=float)[np.newaxis, :]
@@ -90,10 +90,7 @@ def ConstAccelParticle2DVel_test():
     mean_time = 0
     for i, z in enumerate(measurements):
         start = time.time()
-        pf.predict(dt=DT)
-        pf.update(z)
-        pf.resample(fraction=1./4.)
-        pf.estimate()
+        pf.forward(z, dt=DT, fraction=1./4.)
         mean_time += time.time() - start
 
         particles.append([deepcopy(pf.particles[:, 0, 0]), deepcopy(pf.particles[:, 0, 3])])
