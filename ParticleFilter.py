@@ -60,7 +60,6 @@ class ParticleFilter(object):
         else:
             self.particles = self.particle_struct().create_uniform_particles(self.N, self.track_dim)
 
-
         self.weights: np.ndarray = np.ones(N) / N
         self.mu: float = 0.
         self.sigma: float = 0.
