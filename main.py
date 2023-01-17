@@ -8,7 +8,7 @@ from Models import SimplePosHeadingParticle2D_motion_model, SimplePosHeadingPart
 
 N = 5000
 ITER = 50
-DT = .05
+DT = .01
 
 def SimplePosHeadingParticle2D_test():
     x_groundtruth = [[i*DT, i] for i in range(ITER+1)]
@@ -89,16 +89,15 @@ def ConstAccelParticle2DVel_test():
     import time
     mean_time = 0
     for i, z in enumerate(measurements):
+        print(f'\nIteration {i+1}')
+
         start = time.time()
-        pf.forward(z, dt=DT, fraction=1./4.)
+        pf.forward(z, dt=DT, fraction=1./4., verbose=2)
         mean_time += time.time() - start
 
         particles.append([deepcopy(pf.particles[:, 0, 0]), deepcopy(pf.particles[:, 0, 3])])
         x_true.append([x_groundtruth[i+1, 0], x_groundtruth[i+1, 1]])
         mean.append([pf.mu[0, 0], pf.mu[0, 3]])
-        print(f'Iteration {i+1}')
-        print(f'Mean:\n\tposition {pf.mu[0, ::3]}\n\tvelocity {pf.mu[0, 1::3]}\n\tacceleration {pf.mu[0, 2::3]}')
-        print(f'STD:\n\tposition {pf.sigma[0, ::3]}\n\tvelocity {pf.sigma[0, 1::3]}\n\tacceleration {pf.sigma[0, 2::3]}\n\n')
 
     mean_time /= measurements.shape[0]
 

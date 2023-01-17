@@ -85,10 +85,14 @@ class ConstAccelParticle2D(Particle):
         self.ay += np.random.randn() * self.Q_model[5]
     
     def measurement_model(self, z: np.ndarray) -> None:
-        pos_error = np.sqrt((self.x - z[0])**2 + (self.y - z[1])**2)
-        vel_error = np.sqrt((self.vx - z[2])**2 + (self.vy - z[3])**2)
-        self.weight *= ss.norm(0, self.R[0]).pdf(pos_error)
-        self.weight *= ss.norm(0, self.R[2]).pdf(vel_error)
+        pos_error = np.sqrt(((self.x - z[0])/self.R[0])**2 + ((self.y - z[1])/self.R[1])**2)
+        vel_error = np.sqrt(((self.vx - z[2])/self.R[2])**2 + ((self.vy - z[3])/self.R[3])**2)
+        self.weight *= ss.norm(0., 1.).pdf(pos_error)
+        self.weight *= ss.norm(0., 1.).pdf(vel_error)
+        self.weight += 1.e-12
+    
+    def normalize_weight(self, norm: float):
+        self.weight /= norm
 
 
 ##################################

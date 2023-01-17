@@ -60,7 +60,7 @@ class ParticleFilter(object):
         else:
             self.particles = self.particle_struct().create_uniform_particles(self.N, self.track_dim)
 
-        self.weights: np.ndarray = np.ones(N) / N
+        self.sum_weights: float = 0.
         self.mu: self.particle_struct = self.particle_struct()
         self.sigma: self.particle_struct = self.particle_struct()
 
@@ -75,11 +75,12 @@ class ParticleFilter(object):
 
     # Update the particles state by integrating new measurements 
     def update(self, z: np.ndarray, args=()) -> None:
-        
-        self.weights = self.measurement_model(self.particles, self.weights, z, self.R, *args)
 
-        self.weights += 1.e-12
-        self.weights /= sum(self.weights)
+        for particle in self.particles:
+            for track_dim in range(particle.shape[0]):
+                particle[track_dim].measurement_model(z)
+
+        self.weights /= sum(self.sum_weights)
 
     # Computation of the mean and variance of the particles (estimate)
     def estimate(self) -> tuple[np.ndarray, np.ndarray]:
@@ -102,23 +103,23 @@ class ParticleFilter(object):
             self.weights.fill(1/self.N)
     
     # Perform one pass of the particle filter
-    def forward(self, z: np.ndarray, u: Optional[np.ndarray] =None, dt: float =1., fraction: float =1./4., args=()) -> tuple[np.ndarray, np.ndarray]:
+    def forward(self, z: np.ndarray, u: Optional[np.ndarray] =None, dt: float =1., fraction: float =1./4., args=(), verbose: int =0) -> None:
         self.predict(u, dt)
         self.update(z, args)
         self.resample(fraction)
-        return self.estimate()
+        self.estimate()
+
+        if verbose >= 2:
+            print(f'Mean:\n\tposition {self.mu[0, ::3]}\n\tvelocity {self.mu[0, 1::3]}\n\tacceleration {self.mu[0, 2::3]}')
+        if verbose >= 3:
+            print(f'STD:\n\tposition {self.sigma[0, ::3]}\n\tvelocity {self.sigma[0, 1::3]}\n\tacceleration {self.sigma[0, 2::3]}\n\n')
     
     # Loop over every observations
     # And perform a pass of the particle filter
     # for each observations
     def full_forward(self, measurements: np.ndarray, u: Optional[np.ndarray] =None, dt: float =1., fraction: float =1./4., args=(), verbose: int =0):
         for i, z in enumerate(measurements):
-            self.forward(z, u[i], dt, fraction, args)
+            if verbose >= 1:
+                print(f'\nIterations {i+1}')
 
-            if verbose == 1:
-                print(f'Iterations {i+1}')
-            if verbose == 2:
-                print(f'Mean:\n\tposition {self.mu[0, ::3]}\n\tvelocity {self.mu[0, 1::3]}\n\tacceleration {self.mu[0, 2::3]}')
-            if verbose == 3:
-                print(f'STD:\n\tposition {self.sigma[0, ::3]}\n\tvelocity {self.sigma[0, 1::3]}\n\tacceleration {self.sigma[0, 2::3]}\n\n')
-
+            self.forward(z, u[i], dt, fraction, args, verbose)
