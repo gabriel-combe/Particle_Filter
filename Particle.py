@@ -6,13 +6,13 @@ class Particle(object):
     def __init__(self):
         self.particle_dim: int
     
-    def create_uniform_particles(self, N: int, track_dim: int, ranges: np.ndarray) -> np.ndarray:
+    def create_uniform_particles(self, N: int, track_dim: int, ranges: list) -> list:
         particles = np.empty((N, track_dim, self.particle_dim))
         for i in range(self.particle_dim):
             particles[:, :, i] = np.random.uniform(ranges[i][0], ranges[i][1], size=(N, track_dim))
         return particles
 
-    def create_gaussian_particles(self, init_pos: np.ndarray, std: np.ndarray, N: int, track_dim: int) -> np.ndarray:
+    def create_gaussian_particles(self, init_pos: list, std: list, N: int, track_dim: int) -> list:
         particles = np.empty((N, track_dim, self.particle_dim))
         for i in range(self.particle_dim):
             particles[:, :, i] = init_pos[i] + (np.random.randn(N, track_dim) * std[i])
@@ -47,7 +47,7 @@ class SimplePosHeadingParticle2D(Particle):
 ###### ConstAccelParticle2D ######
 
 class ConstAccelParticle2D(Particle):
-    default_ranges: np.ndarray = np.array([[0, 20], [-1, 1], [-0.1, 0.1], [0, 20], [-1, 1], [-0.1, 0.1]])
+    default_ranges: list = [[0, 20], [-1, 1], [-0.1, 0.1], [0, 20], [-1, 1], [-0.1, 0.1]]
     default_Q_model: np.ndarray = np.ones(6)
     
     def __init__(self, x: float =0., vx: float =0., ax: float =0., y: float =0., vy: float =0., ay: float =0., weight: float =1., Q_model: np.ndarray =default_Q_model, R: np.ndarray =None):
@@ -65,10 +65,10 @@ class ConstAccelParticle2D(Particle):
         self.Q_model = Q_model
         self.R = R
     
-    def create_uniform_particles(self, N: int, track_dim: int, ranges: np.ndarray =default_ranges) -> np.ndarray:
+    def create_uniform_particles(self, N: int, track_dim: int, ranges: list =default_ranges) -> list:
         return super().create_uniform_particles(N, track_dim, ranges)
     
-    def motion_model(self, u: Optional[np.ndarray] =None, Q_control: Optional[np.ndarray] =None, dt: float =1.) -> None:
+    def motion_model(self, u: Optional[list] =None, Q_control: Optional[list] =None, dt: float =1.) -> None:
 
         # X position
         self.x += -.5 * self.ax * dt**2 + self.vx * dt + np.random.randn() * self.Q_model[0]
@@ -84,7 +84,7 @@ class ConstAccelParticle2D(Particle):
         # Y acceleration
         self.ay += np.random.randn() * self.Q_model[5]
     
-    def measurement_model(self, z: np.ndarray) -> None:
+    def measurement_model(self, z: list) -> None:
         pos_error = np.sqrt(((self.x - z[0])/self.R[0])**2 + ((self.y - z[1])/self.R[1])**2)
         vel_error = np.sqrt(((self.vx - z[2])/self.R[2])**2 + ((self.vy - z[3])/self.R[3])**2)
         self.weight *= ss.norm(0., 1.).pdf(pos_error)

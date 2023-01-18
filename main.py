@@ -83,7 +83,6 @@ def ConstAccelParticle2DVel_test():
     plt.figure()
 
     particles = [[deepcopy(pf.particles[:, 0, 0]), deepcopy(pf.particles[:, 0, 3])]]
-    x_true = [[x_groundtruth[0][0], x_groundtruth[0][1]]]
     mean = [[init_pos[0, 0], init_pos[0, 3]]]
     
     import time
@@ -96,7 +95,6 @@ def ConstAccelParticle2DVel_test():
         mean_time += time.time() - start
 
         particles.append([deepcopy(pf.particles[:, 0, 0]), deepcopy(pf.particles[:, 0, 3])])
-        x_true.append([x_groundtruth[i+1, 0], x_groundtruth[i+1, 1]])
         mean.append([pf.mu[0, 0], pf.mu[0, 3]])
 
     mean_time /= measurements.shape[0]
@@ -109,8 +107,7 @@ def ConstAccelParticle2DVel_test():
     # for particle in particles[1:]:    
     #     p = plt.scatter(particle[0], particle[1], color='k', marker=',', s=1)
     
-    for x_ground in x_true:
-        x = plt.scatter(x_ground[0], x_ground[1], marker='+', color='cyan', s=180, lw=3)
+    x = plt.scatter(x_groundtruth[:, 0], x_groundtruth[:, 1], marker='+', color='cyan', s=180, lw=3)
     
     for avg in mean:
         m = plt.scatter(avg[0], avg[1], marker='s', color='r')
