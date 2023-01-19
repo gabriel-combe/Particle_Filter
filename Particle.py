@@ -6,22 +6,24 @@ class Particle(object):
     def __init__(self):
         self.particle_dim: int =0
     
-    def create_uniform_particles(self, ranges: list):
+    def create_uniform_particle(self, ranges: list) -> object:
         offset = 0
         for i, attrib in enumerate(self.__dict__.keys()):
             if attrib in ['particle_dim', 'Q_model', 'R', 'weight']:
                 offset += 1
                 continue
             self.__setattr__(attrib, np.random.uniform(ranges[i - offset][0], ranges[i - offset][1]))
+        return self
 
-    def create_gaussian_particles(self, init_pos: list, std: list):
+    def create_gaussian_particle(self, init_pos: list, std: list) -> object:
         offset = 0
         for i, attrib in enumerate(self.__dict__.keys()):
             if attrib in ['particle_dim', 'Q_model', 'R', 'weight']: 
                 offset += 1
                 continue
             self.__setattr__(attrib, init_pos[i - offset] + (np.random.randn() * std[i - offset]))
-        
+        return self
+
     def __str__(self) -> str:
         string_format = ''
         for attrib in self.__dict__:
@@ -48,13 +50,15 @@ class SimplePosHeadingParticle2D(Particle):
         self.y = y
         self.hdg = hdg
     
-    def create_uniform_particles(self,ranges: list =default_ranges):
-        super().create_uniform_particles(ranges)
+    def create_uniform_particle(self,ranges: list =default_ranges) -> Particle:
+        super().create_uniform_particle(ranges)
         self.hdg %= 2 * np.pi
+        return self
     
-    def create_gaussian_particles(self, init_pos: list, std: list):
-        super().create_gaussian_particles(init_pos, std)
+    def create_gaussian_particle(self, init_pos: list, std: list) -> Particle:
+        super().create_gaussian_particle(init_pos, std)
         self.hdg %= 2 * np.pi
+        return self
 
 
 ##################################
@@ -89,8 +93,9 @@ class ConstAccelParticle2D(Particle):
         self.Q_model = Q_model
         self.R = R
     
-    def create_uniform_particles(self, ranges: list =default_ranges):
-        super().create_uniform_particles(ranges)
+    def create_uniform_particle(self, ranges: list =default_ranges) -> Particle:
+        return super().create_uniform_particle(ranges)
+
     
     def motion_model(self, u: Optional[list] =None, Q_control: Optional[list] =None, dt: float =1.) -> None:
 
@@ -134,5 +139,5 @@ class ConstVelParticle2D(Particle):
         self.y = y
         self.vy = vy
     
-    def create_uniform_particles(self, ranges: list =default_ranges):
-        super().create_uniform_particles(ranges)
+    def create_uniform_particle(self, ranges: list =default_ranges):
+        return super().create_uniform_particle(ranges)
