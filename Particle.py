@@ -4,43 +4,57 @@ from typing import Optional
 
 class Particle(object):
     def __init__(self):
-        self.particle_dim: int
+        self.particle_dim: int =0
     
-    def create_uniform_particles(self, N: int, track_dim: int, ranges: list) -> list:
-        particles = np.empty((N, track_dim, self.particle_dim))
-        for i in range(self.particle_dim):
-            particles[:, :, i] = np.random.uniform(ranges[i][0], ranges[i][1], size=(N, track_dim))
-        return particles
+    def create_uniform_particles(self, ranges: list):
+        offset = 0
+        for i, attrib in enumerate(self.__dict__.keys()):
+            if attrib in ['particle_dim', 'Q_model', 'R', 'weight']:
+                offset += 1
+                continue
+            self.__setattr__(attrib, np.random.uniform(ranges[i - offset][0], ranges[i - offset][1]))
 
-    def create_gaussian_particles(self, init_pos: list, std: list, N: int, track_dim: int) -> list:
-        particles = np.empty((N, track_dim, self.particle_dim))
-        for i in range(self.particle_dim):
-            particles[:, :, i] = init_pos[i] + (np.random.randn(N, track_dim) * std[i])
-        return particles
+    def create_gaussian_particles(self, init_pos: list, std: list):
+        offset = 0
+        for i, attrib in enumerate(self.__dict__.keys()):
+            if attrib in ['particle_dim', 'Q_model', 'R', 'weight']: 
+                offset += 1
+                continue
+            self.__setattr__(attrib, init_pos[i - offset] + (np.random.randn() * std[i - offset]))
+        
+    def __str__(self) -> str:
+        string_format = ''
+        for attrib in self.__dict__:
+            if attrib in ['particle_dim', 'Q_model', 'R', 'weight']: continue
+            string_format += f'{attrib} = {self.__dict__[attrib]}\n'
+        return string_format
+            
 
 
 ##################################
 ### SimplePosHeadingParticle2D ###
 
 class SimplePosHeadingParticle2D(Particle):
-    default_ranges: np.ndarray = np.array([[0, 20], [0, 20], [0, 2*np.pi]])
+    default_ranges: list = [[0, 20], [0, 20], [0, 2*np.pi]]
 
-    def __init__(self, x: float =0., y: float =0., hdg: float =0.):
+    def __init__(self, 
+                x: float =0., 
+                y: float =0., 
+                hdg: float =0.):
+
         self.particle_dim = 3
 
         self.x = x
         self.y = y
         self.hdg = hdg
     
-    def create_uniform_particles(self, N: int, track_dim: int, ranges: np.ndarray =default_ranges) -> np.ndarray:
-        particles = super().create_uniform_particles(N, track_dim, ranges)
-        particles[:, :, 2] %= 2 * np.pi
-        return particles
+    def create_uniform_particles(self,ranges: list =default_ranges):
+        super().create_uniform_particles(ranges)
+        self.hdg %= 2 * np.pi
     
-    def create_gaussian_particles(self, init_pos: np.ndarray, std: np.ndarray, N: int, track_dim: int) -> np.ndarray:
-        particles = super().create_gaussian_particles(init_pos, std, N, track_dim)
-        particles[:, :, 2] %= 2 * np.pi
-        return particles
+    def create_gaussian_particles(self, init_pos: list, std: list):
+        super().create_gaussian_particles(init_pos, std)
+        self.hdg %= 2 * np.pi
 
 
 ##################################
@@ -48,9 +62,19 @@ class SimplePosHeadingParticle2D(Particle):
 
 class ConstAccelParticle2D(Particle):
     default_ranges: list = [[0, 20], [-1, 1], [-0.1, 0.1], [0, 20], [-1, 1], [-0.1, 0.1]]
-    default_Q_model: np.ndarray = np.ones(6)
+    default_Q_model: list = [1., 1., 1., 1., 1., 1.]
     
-    def __init__(self, x: float =0., vx: float =0., ax: float =0., y: float =0., vy: float =0., ay: float =0., weight: float =1., Q_model: np.ndarray =default_Q_model, R: np.ndarray =None):
+    def __init__(self, 
+                x: float =0., 
+                vx: float =0., 
+                ax: float =0., 
+                y: float =0., 
+                vy: float =0., 
+                ay: float =0., 
+                weight: float =1., 
+                Q_model: list =default_Q_model, 
+                R: np.ndarray =None):
+
         self.particle_dim = 6
 
         self.x = x
@@ -65,8 +89,8 @@ class ConstAccelParticle2D(Particle):
         self.Q_model = Q_model
         self.R = R
     
-    def create_uniform_particles(self, N: int, track_dim: int, ranges: list =default_ranges) -> list:
-        return super().create_uniform_particles(N, track_dim, ranges)
+    def create_uniform_particles(self, ranges: list =default_ranges):
+        super().create_uniform_particles(ranges)
     
     def motion_model(self, u: Optional[list] =None, Q_control: Optional[list] =None, dt: float =1.) -> None:
 
@@ -87,21 +111,22 @@ class ConstAccelParticle2D(Particle):
     def measurement_model(self, z: list) -> None:
         pos_error = np.sqrt(((self.x - z[0])/self.R[0])**2 + ((self.y - z[1])/self.R[1])**2)
         vel_error = np.sqrt(((self.vx - z[2])/self.R[2])**2 + ((self.vy - z[3])/self.R[3])**2)
-        self.weight *= ss.norm(0., 1.).pdf(pos_error)
-        self.weight *= ss.norm(0., 1.).pdf(vel_error)
-        self.weight += 1.e-12
-    
-    def normalize_weight(self, norm: float):
-        self.weight /= norm
+        self.weight = ss.norm(0., 1.).pdf(pos_error) * ss.norm(0., 1.).pdf(vel_error)
+        # self.weight += 1.e-12
 
 
 ##################################
 ####### ConstVelParticle2D #######
 
 class ConstVelParticle2D(Particle):
-    default_ranges: np.ndarray = np.array([[0, 20], [-1, 1], [0, 20], [-1, 1]])
+    default_ranges: list = [[0, 20], [-1, 1], [0, 20], [-1, 1]]
     
-    def __init__(self, x: float =0., vx: float =0., y: float =0., vy: float =0.):
+    def __init__(self, 
+                x: float =0., 
+                vx: float =0., 
+                y: float =0., 
+                vy: float =0.):
+
         self.particle_dim = 4
 
         self.x = x
@@ -109,5 +134,5 @@ class ConstVelParticle2D(Particle):
         self.y = y
         self.vy = vy
     
-    def create_uniform_particles(self, N: int, track_dim: int, ranges: np.ndarray =default_ranges) -> np.ndarray:
-        return super().create_uniform_particles(N, track_dim, ranges)
+    def create_uniform_particles(self, ranges: list =default_ranges):
+        super().create_uniform_particles(ranges)

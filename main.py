@@ -69,7 +69,8 @@ def ConstAccelParticle2DVel_test():
 
     measurements = np.array([x_pos + (np.random.randn(4) * R[0]) for x_pos in x_groundtruth[1:]])[:, np.newaxis, :]
 
-    init_pos = np.array([[0, 1, 1, 0, 1, 2],[.2, .3, .2, .2, .3, .2]])
+    init_pos = [[0, 1, 1, 0, 1, 2],
+                [.2, .3, .2, .2, .3, .2]]
 
     pf = ParticleFilter(N, particle_struct=ConstAccelParticle2D,
                         track_dim=1, init_pos=init_pos,

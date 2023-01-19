@@ -1,6 +1,5 @@
 import numpy as np
 from typing import Optional
-from copy import deepcopy
 from ResampleMethods import systematic_resample
 from Particle import Particle, ConstAccelParticle2D, SimplePosHeadingParticle2D
 from Models import default_motion_model, default_measurement_model
@@ -14,8 +13,6 @@ class ParticleFilter(object):
                 control_dim: int =0,
                 init_pos: np.ndarray =None,
                 ranges: tuple =None,
-                motion_model_fn=default_motion_model,
-                measurement_model_fn=default_measurement_model,
                 Q_motion: Optional[np.ndarray] =None,
                 Q_control: Optional[np.ndarray] =None,
                 R: Optional[np.ndarray] =None,
@@ -26,9 +23,6 @@ class ParticleFilter(object):
         self.control_dim = control_dim
         self.particle_struct = particle_struct
         self.state_dim = self.particle_struct().particle_dim
-
-        self.motion_model = motion_model_fn
-        self.measurement_model = measurement_model_fn
 
         self.Q_motion = Q_motion
         if self.Q_motion is None:
