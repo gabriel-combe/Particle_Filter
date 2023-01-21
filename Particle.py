@@ -7,8 +7,6 @@ from ParticleTemplate import Particle
 ### SimplePosHeadingParticle2D ###
 
 class SimplePosHeadingParticle2D(Particle):
-    default_ranges: list = [[0, 20], [0, 20], [0, 2*np.pi]]
-
     def __init__(self, 
                 x: float =0., 
                 y: float =0., 
@@ -20,15 +18,41 @@ class SimplePosHeadingParticle2D(Particle):
         self.y = y
         self.hdg = hdg
     
-    def create_uniform_particles(self,ranges: np.ndarray =default_ranges) -> Particle:
-        super().create_uniform_particle(ranges)
-        self.hdg %= 2 * np.pi
-        return self
+    # Create particles which are uniformly distributed in given ranges
+    def create_uniform_particles(self, N: int, track_dim: int, ranges: np.ndarray) -> np.ndarray:
+        particles = super().create_uniform_particles(N, track_dim, ranges)
+        particles[:, :, 2] %= 2 * np.pi
+        return particles
     
-    def create_gaussian_particles(self, init_pos: np.ndarray, std: np.ndarray) -> Particle:
-        super().create_gaussian_particle(init_pos, std)
-        self.hdg %= 2 * np.pi
-        return self
+    # Create particles from a gaussian distribution
+    # with mean (init_pos) and standard deviation (std)
+    def create_gaussian_particles(self, N: int, track_dim: int, init_pos: np.ndarray, std: np.ndarray) -> np.ndarray:
+        particles = super().create_gaussian_particles(N, track_dim,  init_pos, std)
+        particles[:, :, 2] %= 2 * np.pi
+        return particles
+
+    def motion_model(self, particles: np.ndarray, Q_model: np.ndarray, dt: float, u: Optional[np.ndarray], Q_control: Optional[np.ndarray]) -> np.ndarray:
+        N = particles.shape[0]
+        track_dim = particles.shape[1]
+
+        particles[:, :, 2] += (u[:, 0] + (np.random.randn(N, track_dim) * Q_control[:, 0])) % 2*np.pi
+
+        distance = (u[:, 1] * dt) + (np.random.randn(N, track_dim) * Q_control[:, 1])
+
+        particles[:, :, 0] += np.cos(particles[:, :, 2]) * distance
+        particles[:, :, 1] += np.sin(particles[:, :, 2]) * distance
+
+        return particles
+
+    def measurement_model(self, particles: np.ndarray, z: np.ndarray, R: np.ndarray, args=()) -> np.ndarray:
+        proba = 1.
+        for i in range(particles.shape[1]):
+            for k, landmark in enumerate(args[0]):
+                distance = np.linalg.norm(particles[:, i, :2] - landmark, axis=1)
+                proba *= ss.norm(distance, R[i]).pdf(z[i, k])
+            proba *= proba
+
+        return proba
 
 
 ##################################
@@ -40,7 +64,7 @@ class ConstAccelParticle2D(Particle):
     def __init__(self):
         self.particle_dim = 6
     
-     # Create particles which are uniformly distributed in given ranges
+    # Create particles which are uniformly distributed in given ranges
     def create_uniform_particles(self, N: int, track_dim: int, ranges: np.ndarray) -> np.ndarray:
         return super().create_uniform_particles(N, track_dim, ranges)
 
@@ -77,7 +101,7 @@ class ConstAccelParticle2D(Particle):
     # Measurement model assume we give him 
     # xy positions and velocities.
     # Can use additionnal arguments (args)
-    def measurement_model(self, particles: np.ndarray, weights: np.ndarray, z: np.ndarray, R: np.ndarray, args=()) -> np.ndarray:
+    def measurement_model(self, particles: np.ndarray, z: np.ndarray, R: np.ndarray, args=()) -> np.ndarray:
         pos_proba = ss.norm(0., R[:, 0]).pdf(particles[:, :, 0] - z[:, 0]) * ss.norm(0., R[:, 1]).pdf(particles[:, :, 3] - z[:, 1])
         vel_proba = ss.norm(0., R[:, 2]).pdf(particles[:, :, 1] - z[:, 2]) * ss.norm(0., R[:, 3]).pdf(particles[:, :, 4] - z[:, 3])
         return np.sum(pos_proba * vel_proba, axis=1)
@@ -85,11 +109,3 @@ class ConstAccelParticle2D(Particle):
 
 ##################################
 ####### ConstVelParticle2D #######
-
-# init_pos = np.repeat([[[1, 1, 1, 1, 1, 1], [.1, .1, .1, .1, .1, .1]]], 2, axis=0)
-# p = ConstAccelParticle2D(5, 2).create_gaussian_particles(init_pos[:, 0], init_pos[:, 1])
-# print(p.samples)
-# p.motion_model(None, None, np.array([[1, 1, 1, 1, 1, 1], [.1, .1, .1, .1, .1, .1]]))
-# print(p.samples)
-# p.measurement_model(np.array([[1, 1, .1, .1], [2, 2, .2, .2]]), np.array([[.1, .1, .1, .1], [.2, .2, .2, .2]]))
-# print(p.weights)

@@ -69,7 +69,7 @@ class ParticleFilter(object):
         # Array of all the trackers and particles
         self.particles: np.ndarray = np.zeros((self.N, self.track_dim, self.state_dim))
         if init_pos is not None:
-            self.particles = self.particle_struct().create_gaussian_particles(self.N, self.track_dim, init_pos[0], init_pos[1])
+            self.particles = self.particle_struct().create_gaussian_particles(self.N, self.track_dim, init_pos[:, 0], init_pos[:, 1])
         else:
             self.particles = self.particle_struct().create_uniform_particles(self.N, self.track_dim, self.ranges)
         
@@ -92,7 +92,7 @@ class ParticleFilter(object):
     # Update each tracker belief with observations (z).
     # Can provide additionnal arguments (args) if needed
     def update(self, z: np.ndarray, args=()) -> None:
-        self.weights = self.particle_struct().measurement_model(self.particles, self.weights, z, self.R, args=())
+        self.weights *= self.particle_struct().measurement_model(self.particles, z, self.R, args)
         self.weights += 1.e-12
         self.weights /= np.sum(self.weights)
 
@@ -124,11 +124,11 @@ class ParticleFilter(object):
         self.resample(fraction)
         self.estimate()
 
-        for i in range(self.track_dim):
-            if verbose >= 2:
-                print(f'Mean Target {i+1}:\n\tposition {self.mu[i, ::3]}\n\tvelocity {self.mu[i, 1::3]}\n\tacceleration {self.mu[i, 2::3]}')
-            if verbose >= 3:
-                print(f'STD Target {i+1}:\n\tposition {self.sigma[i, ::3]}\n\tvelocity {self.sigma[i, 1::3]}\n\tacceleration {self.sigma[i, 2::3]}\n\n')
+        # for i in range(self.track_dim):
+        #     if verbose >= 2:
+        #         print(f'Mean Target {i+1}:\n\tposition {self.mu[i, ::3]}\n\tvelocity {self.mu[i, 1::3]}\n\tacceleration {self.mu[i, 2::3]}')
+        #     if verbose >= 3:
+        #         print(f'STD Target {i+1}:\n\tposition {self.sigma[i, ::3]}\n\tvelocity {self.sigma[i, 1::3]}\n\tacceleration {self.sigma[i, 2::3]}\n\n')
     
     # Loop over every observations
     # And perform a pass of the particle filter

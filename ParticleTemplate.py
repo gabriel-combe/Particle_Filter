@@ -30,5 +30,5 @@ class Particle(object):
     # Measurement model used to get the probability 
     # that the particle match the real system
     # Need to be implemented for each Particle object
-    def measurement_model(self, particles: np.ndarray, weights: np.ndarray, z: np.ndarray, R: np.ndarray, args=()) -> np.ndarray:
+    def measurement_model(self, particles: np.ndarray, z: np.ndarray, R: np.ndarray, args=()) -> np.ndarray:
         pass
