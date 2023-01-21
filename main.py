@@ -4,14 +4,13 @@ import matplotlib.pyplot as plt
 from ParticleFilter import ParticleFilter
 from Particle import SimplePosHeadingParticle2D, ConstAccelParticle2D
 from ResampleMethods import systematic_resample
-from Models import SimplePosHeadingParticle2D_motion_model, SimplePosHeadingParticle2D_measurement_model, ConstAccelParticle2DVel_motion_model, ConstAccelParticle2DVel_measurement_model, ConstAccelParticle2D_motion_model, ConstAccelParticle2D_measurement_model
 
 N = 5000
 ITER = 50
 DT = .01
 
 def SimplePosHeadingParticle2D_test():
-    x_groundtruth = [[i*DT, i] for i in range(ITER+1)]
+    x_groundtruth = np.array([[i*DT, i] for i in range(ITER+1)])
 
     R = np.array([.1], dtype=float)
     Q_control = np.array([.2, .05], dtype=float)[np.newaxis, :]
@@ -29,9 +28,7 @@ def SimplePosHeadingParticle2D_test():
 
     pf = ParticleFilter(N, particle_struct=SimplePosHeadingParticle2D,
                         track_dim=1, control_dim=2,
-                        ranges=((0, 20), (0, 20), (0, 2*np.pi)),
-                        motion_model_fn=SimplePosHeadingParticle2D_motion_model,
-                        measurement_model_fn=SimplePosHeadingParticle2D_measurement_model,
+                        ranges=np.array([[0, 20], [0, 20], [0, 2*np.pi]]),
                         Q_control=Q_control,
                         R=R,
                         resample_method_fn=systematic_resample)
@@ -75,8 +72,6 @@ def ConstAccelParticle2DVel_test():
     pf = ParticleFilter(N, particle_struct=ConstAccelParticle2D,
                         track_dim=1, init_pos=init_pos,
                         # ranges=np.array([[0, 20], [-10, 10], [-5, 5], [0, 20], [-10, 10], [-5, 5]]),
-                        motion_model_fn=ConstAccelParticle2DVel_motion_model,
-                        measurement_model_fn=ConstAccelParticle2DVel_measurement_model,
                         Q_motion=Q_motion,
                         R=R,
                         resample_method_fn=systematic_resample)
@@ -136,8 +131,6 @@ def ConstAccelParticle2D_test():
     pf = ParticleFilter(N, particle_struct=ConstAccelParticle2D,
                         track_dim=1, init_pos=init_pos,
                         # ranges=np.array([[0, 20], [-10, 10], [-5, 5], [0, 20], [-10, 10], [-5, 5]]),
-                        motion_model_fn=ConstAccelParticle2D_motion_model,
-                        measurement_model_fn=ConstAccelParticle2D_measurement_model,
                         Q_motion=Q_motion,
                         R=R,
                         resample_method_fn=systematic_resample)
