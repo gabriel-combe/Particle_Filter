@@ -66,6 +66,7 @@ def SimplePosHeadingParticle2D_test():
     plt.legend([l, p, x, m], ['Landmarks', 'Particles', 'Actual', 'PF'], loc=4, numpoints=1)
     plt.show()
 
+
 def ConstAccelParticle2DVel_test():
     # x_groundtruth = np.array([[i*DT, (i*DT)**2, 1, ((i*DT)**2 - ((i-1)*DT)**2)/DT] for i in range(int((ITER)/DT)+1)])
     # x_groundtruth = np.array([[i*DT, (i*DT)**3, 1, ((i*DT)**3 - ((i-1)*DT)**3)/DT] for i in range(int((ITER)/DT)+1)])
@@ -102,9 +103,10 @@ def ConstAccelParticle2DVel_test():
         particles.append([deepcopy(pf.particles[:, 0, 0]), deepcopy(pf.particles[:, 0, 3])])
         mean.append([pf.mu[0, 0], pf.mu[0, 3]])
 
+    mean_particle = np.mean(np.array(mean) - np.array(x_groundtruth)[:, :2], axis=0)
     print(f'\n\nTotal time for {measurements.shape[0]} -> {mean_time} seconds')
     print(f'\nAverage time for a particle filter pass: {mean_time / measurements.shape[0]} seconds')
-    print('\nfinal position error, variance:\n\t', pf.mu[0, ::3] - x_groundtruth[-1][:2], pf.sigma[0, ::3])
+    print('\nfinal position error, variance:\n\t', mean_particle, pf.sigma[0, ::3])
 
     p = plt.scatter(particles[0][0], particles[0][1], alpha=.20*np.sqrt(5000)/np.sqrt(N), color='g')
 
@@ -118,6 +120,7 @@ def ConstAccelParticle2DVel_test():
 
     plt.legend([p, x, m], ['Particles', 'Actual', 'PF'], loc=4, numpoints=1)
     plt.show()
+
 
 def ConstAccelParticle2DVel2T_test():
     # x_groundtruth = np.array([[i*DT, (i*DT)**2, 1, ((i*DT)**2 - ((i-1)*DT)**2)/DT] for i in range(int((ITER)/DT)+1)])
