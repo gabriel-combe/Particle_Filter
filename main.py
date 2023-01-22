@@ -118,7 +118,8 @@ def ConstAccelParticle2DVel_test():
     
     for avg in mean:
         m = plt.scatter(avg[0], avg[1], marker='s', color='r')
-
+    
+    plt.title(f'Mean error: x = {mean_particle[0]}, y = {mean_particle[1]} \nMean time per pass: {mean_time / measurements.shape[0]:.5}')
     plt.legend([p, x, m], ['Particles', 'Actual', 'PF'], loc=4, numpoints=1)
     plt.show()
 
