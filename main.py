@@ -70,15 +70,16 @@ def SimplePosHeadingParticle2D_test():
 def ConstAccelParticle2DVel_test():
     # x_groundtruth = np.array([[i*DT, (i*DT)**2, 1, ((i*DT)**2 - ((i-1)*DT)**2)/DT] for i in range(int((ITER)/DT)+1)])
     # x_groundtruth = np.array([[i*DT, (i*DT)**3, 1, ((i*DT)**3 - ((i-1)*DT)**3)/DT] for i in range(int((ITER)/DT)+1)])
-    x_groundtruth = np.array([[i*DT, 10.*np.sin(i*DT), 1, 10.*(np.sin(i*DT) - np.sin((i-1)*DT))/DT] for i in range(int((ITER)/DT)+1)])
+    # x_groundtruth = np.array([[i*DT, 10.*np.sin(i*DT), 1, 10.*(np.sin(i*DT) - np.sin((i-1)*DT))/DT] for i in range(int((ITER)/DT)+1)])
+    x_groundtruth = np.array([[i*DT, 10.*np.sin(i*DT) + 20.*np.cos(i*DT/10.), 1, (10.*(np.sin(i*DT) - np.sin((i-1)*DT)) + 20.*(np.cos(i*DT/10.) - np.cos((i-1)*DT/10.)))/DT] for i in range(int((ITER)/DT)+1)])
 
     R = np.array([[.2, .2, .5, .5]])
     Q_motion = np.array([.3, .2, .7, .3, .2, .7])[np.newaxis, :]
 
     measurements = np.array([x_pos + (np.random.randn(4) * R[0]) for x_pos in x_groundtruth[1:]])[:, np.newaxis, :]
 
-    init_pos = np.array([[[0, 1, 1, 0, 1, 2],
-                        [.2, .3, .2, .2, .3, .2]]])
+    init_pos = np.array([[[x_groundtruth[0, 0], x_groundtruth[0, 2], 1, x_groundtruth[0, 1], x_groundtruth[0, 3], 2],
+                        [.1, .2, .4, .4, .3, .4]]])
 
     pf = ParticleFilter(N, particle_struct=ConstAccelParticle2D,
                         track_dim=1, init_pos=init_pos,
